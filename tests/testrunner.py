@@ -11,13 +11,22 @@ class TestAddressValidationAPI(unittest.TestCase):
         connector = StreetAddressValidation(UPS_XAV_CONNECTION_TEST, USERID, PASSWORD, LICENSE_NUMBER)
         response = connector.execute({'AddressLine':'AIRWAY ROAD SUITE 7',
                                       'PoliticalDivision2':'SAN DIEGO',
-                                      'PoliticalDivision':'CA',
+                                      'PoliticalDivision1':'CA',
                                       'PostcodePrimaryLow':'92154',
                                       'CountryCode':'US'})
-        self.assertEqual(response['addresses'][0]['City'], 'SAN DIEGO')
-        self.assertEqual(response['addresses'][0]['StateProvinceCode'], 'CA')
+        self.assertEqual(response['addresses'][0]['PoliticalDivision2'], 'SAN DIEGO')
+        self.assertEqual(response['addresses'][0]['PoliticalDivision1'], 'CA')
         self.assertTrue(response['ambiguous'])
         self.assertFalse(response['valid'])
+        
+        response = connector.execute({'AddressLine': '7880 AIRWAY RD',
+                                      'CountryCode': 'US',
+                                      'PoliticalDivision1': 'CA',
+                                      'PoliticalDivision2': 'SAN DIEGO',
+                                      'PostcodeExtendedLow': '8308',
+                                      'PostcodePrimaryLow': '92154'})
+        self.assertFalse(response['ambiguous'])
+        self.assertTrue(response['valid'])
     
     def test_address_validate(self):
         connector = AddressValidation(UPS_AV_CONNECTION_TEST, USERID, PASSWORD, LICENSE_NUMBER)

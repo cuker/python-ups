@@ -66,27 +66,28 @@ class StreetAddressValidation(UPSService):
             PostcodePrimaryLow #zip
             CountryCode
         """
-        root = ET.Element('AccessValidationRequest')
+        root = ET.Element('AddressValidationRequest')
         info = {'Request': {
                     'TransactionReference': {
                         'CustomerContext':'foo',
                         'XpciVersion':'1.0',},
                     'RequestAction':'XAV',
                     'RequestOption':'3'},
-                'AddressKeyForm': address
+                'AddressKeyFormat': address
             }
         dicttoxml(info, root)
         return root
     
     def parse_xml(self, xml):
         ret = dict()
-        ret['ambiguous'] = bool(xml.find('.//AmbiguousAddressIndicator'))
-        ret['valid'] = bool(xml.find('.//ValidAddressIndicator'))
-        ret['no_candidates'] = bool(xml.find('.//NoCandidatesIndicator'))
+        ret['ambiguous'] = xml.find('.//AmbiguousAddressIndicator') is not None
+        ret['valid'] = xml.find('.//ValidAddressIndicator') is not None
+        ret['no_candidates'] = xml.find('.//NoCandidatesIndicator') is not None
         ret['classification'] = xmltodict(xml.find('.//AddressClassification'))
         ret['addresses'] = list()
         for item in xml.findall('.//AddressKeyFormat'):
             address = xmltodict(item)
+            del address['AddressClassification']
             address['classification'] = xmltodict(item.find('.//AddressClassification'))
             ret['addresses'].append(address)
         return ret
