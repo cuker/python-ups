@@ -1,60 +1,4 @@
-import urllib, urllib2
-try:
-    from xml.etree import ElementTree as ET
-except ImportError:
-    from elementtree import ElementTree as ET
-
-def dicttoxml(dictionary, parent):
-    for key, value in dictionary.iteritems():
-        if isinstance(value, dict):
-            dicttoxml(value, ET.SubElement(parent, key))
-        else:
-            ET.SubElement(parent, key).text = unicode(value)
-
-def xmltodict(element):
-    ret = dict()
-    for item in element.getchildren():
-        ret[item.tag] = item.text
-    return ret
-
-class UPSXMLError(Exception):
-    def __init__(self, element):
-        self.info = xmltodict(element)
-        super(UPSXMLError, self).__init__(self.info['ErrorDescription'])
-
-class UPSService(object):
-    def __init__(self, url, user_id, password, license_number):
-        self.url = url
-        self.user_id = user_id
-        self.password = password
-        self.license_number = license_number
-    
-    def make_header(self):
-        root = ET.Element('AccessRequest')
-        info = {'AccessLicenseNumber':self.license_number,
-                'UserId':self.user_id,
-                'Password':self.password}
-        dicttoxml(info, root)
-        return root
-    
-    def submit_xml(self, xml):
-        response = urllib2.urlopen(self.url, xml)
-        root = ET.parse(response).getroot()
-        if root.tag == 'Error':
-            raise UPSXMLError(root)
-        error = root.find('.//Error')
-        if error:
-            raise UPSXMLError(error)
-        return root
-    
-    def make_xml(self, address):
-        header = ET.tostring(self.make_header())
-        body = ET.tostring(self.make_body(address))
-        return u'<?xml version="1.0"?>\n%s\n<?xml version="1.0"?>\n%s' % (header, body)
-    
-    def execute(self, address):
-        xml = self.make_xml(address)
-        return self.parse_xml(self.submit_xml(xml))
+from ups.common import UPSService, xmltodict, dicttoxml, ET
 
 class StreetAddressValidation(UPSService):
     def make_body(self, address):
@@ -87,21 +31,12 @@ class StreetAddressValidation(UPSService):
         ret['addresses'] = list()
         for item in xml.findall('.//AddressKeyFormat'):
             address = xmltodict(item)
-            del address['AddressClassification']
             address['classification'] = xmltodict(item.find('.//AddressClassification'))
             ret['addresses'].append(address)
         return ret
 
 class AddressValidation(UPSService):
     def make_body(self, address):
-        """
-        address keys:
-            AddressLine
-            PoliticalDivision2 #city
-            PoliticalDiction #state
-            PostcodePrimaryLow #zip
-            CountryCode
-        """
         root = ET.Element('AddressValidationRequest')
         info = {'Request': {
                     'TransactionReference': {
@@ -118,7 +53,6 @@ class AddressValidation(UPSService):
         for address in xml.findall('.//AddressValidationResult'):
             inner_address = address.find('.//Address')
             info = xmltodict(address)
-            del info['Address']
             info.update(xmltodict(inner_address))
             ret.append(info)
         return ret
