@@ -39,7 +39,7 @@ class TestAddressValidationAPI(unittest.TestCase):
         self.assertFalse(response['valid'])
         
         connector = AddressValidation(UPS_AV_CONNECTION_TEST, USERID, PASSWORD, LICENSE_NUMBER)
-        response = connector.execute({'City':'SAN DIEGO',
+        response = connector.execute({'City':'San Diego',
                                       'CountryCode':'US',
                                       'PostalCode':'92126',
                                       'StateProvinceCode':'CA',})
