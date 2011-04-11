@@ -65,7 +65,7 @@ class AddressValidation(UPSService):
         ret['ambiguous'] = len(addresses) > 1
         if 'PostalCode' in address and 'City' in address and 'StateProvinceCode' in address:
             try:
-                postal_code = int(address['PostalCode'])
+                int_postal_code = int(address['PostalCode'])
             except ValueError:
                 pass
             else:
@@ -78,11 +78,11 @@ class AddressValidation(UPSService):
                         except ValueError:
                             continue
                         else:
-                            if (postal_code >= low and 
-                                postal_code <= high):
-                                possible_address['PostalCode'] = postal_code
-                            if (postal_code >= low and 
-                                postal_code <= high and
+                            if (int_postal_code >= low and 
+                                int_postal_code <= high):
+                                possible_address['PostalCode'] = address['PostalCode']
+                            if (int_postal_code >= low and 
+                                int_postal_code <= high and
                                 address['City'].upper() == possible_address['City'] and
                                 address['StateProvinceCode'].upper() == possible_address['StateProvinceCode']):
                                 ret['valid'] = True
