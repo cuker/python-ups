@@ -83,8 +83,8 @@ class AddressValidation(UPSService):
                                 possible_address['PostalCode'] = address['PostalCode']
                             if (int_postal_code >= low and 
                                 int_postal_code <= high and
-                                address['City'].upper() == possible_address['City'] and
-                                address['StateProvinceCode'].upper() == possible_address['StateProvinceCode']):
+                                address['City'].upper().strip() == possible_address['City'].strip() and
+                                address['StateProvinceCode'].upper().strip() == possible_address['StateProvinceCode'].strip()):
                                 ret['valid'] = True
                                 break
         else:
